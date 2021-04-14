@@ -72,16 +72,19 @@ export const BookList: FC<{}> = ({}): ReactElement => {
       parseQuery.equalTo('genre', queryGenreValue);
     }
     // Many-to-many query
+    // In this case, we need to retrieve books related to the chosen author
     if (queryAuthorValue !== '') {
       parseQuery.equalTo('authors', queryAuthorValue);
     }
-    // TODO: one-to-one ISBD query
     return await parseQuery
       .find()
       .then(async (books: [Parse.Object]) => {
-        // Be aware that empty or invalid queries return as an empty array
-        // Set results to state variable
+        // Many-to-many objects retrieval
+        // In this example we need to get every related author Parse.Object
+        // and add it to our query result objects
         for (let book of books) {
+          console.log(book.get('authors'));
+          // This query is done by creating a relation and querying it
           let bookAuthorsRelation = book.relation('authors');
           book.authorsObjects = await bookAuthorsRelation.query().find();
         }
@@ -128,7 +131,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
           <List.Accordion title="Query options">
             {publishers !== null && (
               <RadioButton.Group
-                onValueChange={(newValue) => setQueryPublisher(newValue)}
+                onValueChange={newValue => setQueryPublisher(newValue)}
                 value={queryPublisher}>
                 <List.Accordion title="Publisher">
                   {publishers.map((publisher: Parse.Object, index: number) => (
@@ -143,7 +146,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
             )}
             {genres !== null && (
               <RadioButton.Group
-                onValueChange={(newValue) => setQueryGenre(newValue)}
+                onValueChange={newValue => setQueryGenre(newValue)}
                 value={queryGenre}>
                 <List.Accordion title="Genre">
                   {genres.map((genre: Parse.Object, index: number) => (
@@ -158,7 +161,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
             )}
             {authors !== null && (
               <RadioButton.Group
-                onValueChange={(newValue) => setQueryAuthor(newValue)}
+                onValueChange={newValue => setQueryAuthor(newValue)}
                 value={queryAuthor}>
                 <List.Accordion title="Author">
                   {authors.map((author: Parse.Object, index: number) => (

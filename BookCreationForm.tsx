@@ -28,11 +28,8 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
   // useEffect is called after the component is initially rendered and
   // after every other render
   useEffect(() => {
-    // Since the async method Parse.User.currentAsync is needed to
-    // retrieve the current user data, you need to declare an async
-    // function here and call it afterwards
     async function getFormChoices() {
-      // This condition ensures that username is updated only if needed
+      // This condition ensures that data is updated only if needed
       if (publishers === null && authors === null && genres === null) {
         // Query all choices
         for (let choiceObject of ['Publisher', 'Author', 'Genre']) {
@@ -91,7 +88,9 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
       newObject.set(dataToSet);
 
       // many-to-many relation
+      // Create a new relations so data can be added
       let authorsRelation = newObject.relation('authors');
+      // bookAuthorsObjects is an array of Parse.Objects, you can add to relation by adding the whole array or object by object
       authorsRelation.add(bookAuthorsObjects);
 
       // After setting the values, save it on the server
@@ -131,14 +130,14 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
         <Title>{'New Book'}</Title>
         <PaperTextInput
           value={bookTitle}
-          onChangeText={(text) => setBookTitle(text)}
+          onChangeText={text => setBookTitle(text)}
           label="Title"
           mode="outlined"
           style={Styles.form_input}
         />
         <PaperTextInput
           value={bookISBD}
-          onChangeText={(text) => setBookISBD(text)}
+          onChangeText={text => setBookISBD(text)}
           label="ISBD"
           mode="outlined"
           style={Styles.form_input}
@@ -147,7 +146,7 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
           <>
             <PaperText>Publisher</PaperText>
             <RadioButton.Group
-              onValueChange={(newValue) => setBookPublisher(newValue)}
+              onValueChange={newValue => setBookPublisher(newValue)}
               value={bookPublisher}>
               {publishers.map((publisher: Parse.Object, index: number) => (
                 <RadioButton.Item
@@ -163,7 +162,7 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
           <>
             <PaperText>Genre</PaperText>
             <RadioButton.Group
-              onValueChange={(newValue) => setBookGenre(newValue)}
+              onValueChange={newValue => setBookGenre(newValue)}
               value={bookGenre}>
               {genres.map((genre: Parse.Object, index: number) => (
                 <RadioButton.Item
