@@ -62,35 +62,43 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
   // Functions used by the screen components
   const createBook = async function (): Promise<[boolean]> {
     try {
-      // This values come from state variables
+      // This values come from state variables linked to
+      // the screen form fields, retrieving the user choices
+      // as a complete Parse.Object, when applicable;
       const bookTitleValue: string = bookTitle;
       const bookISBDValue: string = bookISBD;
+      // For example, bookPublisher holds the value from
+      // RadioButton.Group field with its options being every
+      // Publisher parse object instance saved on server, which is
+      // queried on screen load via useEffect
       const bookPublisherObject: Parse.Object = bookPublisher;
-      const bookAuthorsObjects: [Parse.Object] = bookAuthors;
       const bookGenreObject: Parse.Object = bookGenre;
-
-      let dataToSet = {};
-      dataToSet = {
-        title: bookTitleValue,
-        isbd: bookISBDValue,
-        // one-to-many relations
-        // add direct object to field
-        publisher: bookPublisherObject,
-        // add pointer to field
-        genre: bookGenreObject.toPointer(),
-      };
+      // bookAuthors can be an array of Parse.Objects, since the book
+      // may have more than one Author
+      const bookAuthorsObjects: [Parse.Object] = bookAuthors;
 
       // Creates a new parse object instance
       const objectParseObject: Parse.Object = Parse.Object.extend('Book');
       let newObject = new objectParseObject();
 
       // Set data to parse object
-      newObject.set(dataToSet);
+      // Simple title field
+      newObject.set('title', bookTitleValue);
+
+      // 1:1 relation, for now set as a simple string as well
+      newObject.set('isbd', bookISBDValue);
+
+      // One-to-many relations can be set in two ways:
+      // add direct object to field (Parse will convert to pointer on save)
+      newObject.set('publisher', bookPublisherObject);
+      // or add pointer to field
+      newObject.set('genre', bookGenreObject.toPointer());
 
       // many-to-many relation
-      // Create a new relations so data can be added
+      // Create a new relation so data can be added
       let authorsRelation = newObject.relation('authors');
-      // bookAuthorsObjects is an array of Parse.Objects, you can add to relation by adding the whole array or object by object
+      // bookAuthorsObjects is an array of Parse.Objects,
+      // you can add to relation by adding the whole array or object by object
       authorsRelation.add(bookAuthorsObjects);
 
       // After setting the values, save it on the server

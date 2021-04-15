@@ -59,11 +59,18 @@ export const BookList: FC<{}> = ({}): ReactElement => {
   }, [publishers, authors, genres]);
 
   const queryBooks = async function (): Promise<[Boolean]> {
+    // This values come from state variables linked to
+    // the screen query RadioButton.Group fields, with its options being every
+    // parse object instance saved on server from the referred class, which is
+    // queried on screen load via useEffect; this variables retrievie the user choices
+    // as a complete Parse.Object;
     const queryPublisherValue: Parse.Object = queryPublisher;
     const queryGenreValue: Parse.Object = queryGenre;
     const queryAuthorValue: Parse.Object = queryAuthor;
+
     // Reading parse objects is done by using Parse.Query
     const parseQuery: Parse.Query = new Parse.Query('Book');
+
     // One-to-many queries
     if (queryPublisherValue !== '') {
       parseQuery.equalTo('publisher', queryPublisherValue);
@@ -71,11 +78,13 @@ export const BookList: FC<{}> = ({}): ReactElement => {
     if (queryGenreValue !== '') {
       parseQuery.equalTo('genre', queryGenreValue);
     }
+
     // Many-to-many query
     // In this case, we need to retrieve books related to the chosen author
     if (queryAuthorValue !== '') {
       parseQuery.equalTo('authors', queryAuthorValue);
     }
+
     return await parseQuery
       .find()
       .then(async (books: [Parse.Object]) => {
@@ -83,7 +92,6 @@ export const BookList: FC<{}> = ({}): ReactElement => {
         // In this example we need to get every related author Parse.Object
         // and add it to our query result objects
         for (let book of books) {
-          console.log(book.get('authors'));
           // This query is done by creating a relation and querying it
           let bookAuthorsRelation = book.relation('authors');
           book.authorsObjects = await bookAuthorsRelation.query().find();
