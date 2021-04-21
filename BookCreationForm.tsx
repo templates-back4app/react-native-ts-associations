@@ -79,14 +79,33 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
 
       // Creates a new parse object instance
       const objectParseObject: Parse.Object = Parse.Object.extend('Book');
-      let newObject = new objectParseObject();
+      let newObject: Parse.Object = new objectParseObject();
 
       // Set data to parse object
       // Simple title field
       newObject.set('title', bookTitleValue);
 
-      // 1:1 relation, for now set as a simple string as well
-      newObject.set('isbd', bookISBDValue);
+      // 1:1 relation, need to check for uniqueness of value before creating a new ISBD object
+      let isbdQuery: Parse.Query = new Parse.Query('ISBD');
+      isbdQuery.equalTo('name', bookISBDValue);
+      let isbdQueryResult: Parse.Object = await isbdQuery.first();
+      if (isbdQueryResult !== null && isbdQueryResult !== undefined) {
+        // If first returns a valid object instance, it means that there
+        // is at least one instance of ISBD with the informed value
+        Alert.alert(
+          'Error!',
+          'There is already an ISBD instance with this value!',
+        );
+        return false;
+      } else {
+        // Create a new ISBD object instance to create a one-to-one relation on saving
+        const isbdParseObject: Parse.Object = Parse.Object.extend('ISBD');
+        let isbdObject: Parse.Object = new isbdParseObject();
+        isbdObject.set('name', bookISBDValue);
+        isbdObject = await isbdObject.save();
+        // Set the new object to the new book object ISBD field
+        newObject.set('isbd', isbdObject);
+      }
 
       // One-to-many relations can be set in two ways:
       // add direct object to field (Parse will convert to pointer on save)

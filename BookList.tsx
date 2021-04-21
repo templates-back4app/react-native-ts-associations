@@ -18,9 +18,11 @@ export const BookList: FC<{}> = ({}): ReactElement => {
   const [publishers, setPublishers] = useState(null);
   const [authors, setAuthors] = useState(null);
   const [genres, setGenres] = useState(null);
+  const [isbds, setIsbds] = useState(null);
   const [queryPublisher, setQueryPublisher] = useState('');
   const [queryAuthor, setQueryAuthor] = useState('');
   const [queryGenre, setQueryGenre] = useState('');
+  const [queryIsbd, setQueryIsbd] = useState('');
   const [queriedBooks, setQueriedBooks] = useState<[Parse.Object]>();
 
   // useEffect is called after the component is initially rendered and
@@ -28,7 +30,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
   useEffect(() => {
     async function getQueryChoices() {
       // Query all choices
-      for (let choiceObject of ['Publisher', 'Author', 'Genre']) {
+      for (let choiceObject of ['Publisher', 'Author', 'Genre', 'ISBD']) {
         let newQuery: Parse.Query = new Parse.Query(choiceObject);
         await newQuery
           .find()
@@ -41,6 +43,8 @@ export const BookList: FC<{}> = ({}): ReactElement => {
               setAuthors(queryResults);
             } else if (choiceObject === 'Genre') {
               setGenres(queryResults);
+            } else if (choiceObject === 'ISBD') {
+              setIsbds(queryResults);
             }
             return true;
           })
@@ -53,10 +57,15 @@ export const BookList: FC<{}> = ({}): ReactElement => {
       queryBooks();
     }
     // This condition ensures that username is updated only if needed
-    if (publishers === null && authors === null && genres === null) {
+    if (
+      publishers === null &&
+      authors === null &&
+      genres === null &&
+      isbds === null
+    ) {
       getQueryChoices();
     }
-  }, [publishers, authors, genres]);
+  }, [publishers, authors, genres, isbds]);
 
   const queryBooks = async function (): Promise<[Boolean]> {
     // This values come from state variables linked to
@@ -67,6 +76,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
     const queryPublisherValue: Parse.Object = queryPublisher;
     const queryGenreValue: Parse.Object = queryGenre;
     const queryAuthorValue: Parse.Object = queryAuthor;
+    const queryIsbdValue: Parse.Object = queryIsbd;
 
     // Reading parse objects is done by using Parse.Query
     const parseQuery: Parse.Query = new Parse.Query('Book');
@@ -77,6 +87,11 @@ export const BookList: FC<{}> = ({}): ReactElement => {
     }
     if (queryGenreValue !== '') {
       parseQuery.equalTo('genre', queryGenreValue);
+    }
+
+    // One-to-one query
+    if (queryIsbdValue !== '') {
+      parseQuery.equalTo('isbd', queryIsbdValue);
     }
 
     // Many-to-many query
@@ -120,7 +135,9 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                 title={book.get('title')}
                 description={`Publisher: ${book
                   .get('publisher')
-                  .get('name')}, ISBD: ${book.get('isbd')}, Genre: ${book
+                  .get('name')}, ISBD: ${book
+                  .get('isbd')
+                  .get('name')}, Genre: ${book
                   .get('genre')
                   .get('name')}, Author(s): ${book.authorsObjects.map(
                   (author: Parse.Object) => `${author.get('name')}`,
@@ -177,6 +194,21 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                       key={`${index}`}
                       label={author.get('name')}
                       value={author}
+                    />
+                  ))}
+                </List.Accordion>
+              </RadioButton.Group>
+            )}
+            {isbds !== null && (
+              <RadioButton.Group
+                onValueChange={newValue => setQueryIsbd(newValue)}
+                value={queryIsbd}>
+                <List.Accordion title="ISBD">
+                  {isbds.map((isbd: Parse.Object, index: number) => (
+                    <RadioButton.Item
+                      key={`${index}`}
+                      label={isbd.get('name')}
+                      value={isbd}
                     />
                   ))}
                 </List.Accordion>
