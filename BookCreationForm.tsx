@@ -60,7 +60,7 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
   }, [publishers, authors, genres]);
 
   // Functions used by the screen components
-  const createBook = async function (): Promise<[boolean]> {
+  const createBook = async function (): Promise<boolean> {
     try {
       // This values come from state variables linked to
       // the screen form fields, retrieving the user choices
@@ -78,12 +78,11 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
       const bookAuthorsObjects: [Parse.Object] = bookAuthors;
 
       // Creates a new parse object instance
-      const objectParseObject: Parse.Object = Parse.Object.extend('Book');
-      let newObject: Parse.Object = new objectParseObject();
+      let Book: Parse.Object = new Parse.Object('Book');
 
       // Set data to parse object
       // Simple title field
-      newObject.set('title', bookTitleValue);
+      Book.set('title', bookTitleValue);
 
       // 1:1 relation, need to check for uniqueness of value before creating a new ISBD object
       let isbdQuery: Parse.Query = new Parse.Query('ISBD');
@@ -99,44 +98,44 @@ export const BookCreationForm: FC<{}> = ({}): ReactElement => {
         return false;
       } else {
         // Create a new ISBD object instance to create a one-to-one relation on saving
-        const isbdParseObject: Parse.Object = Parse.Object.extend('ISBD');
-        let isbdObject: Parse.Object = new isbdParseObject();
-        isbdObject.set('name', bookISBDValue);
-        isbdObject = await isbdObject.save();
+        let ISBD: Parse.Object = new Parse.Object('ISBD');
+        ISBD.set('name', bookISBDValue);
+        ISBD = await ISBD.save();
         // Set the new object to the new book object ISBD field
-        newObject.set('isbd', isbdObject);
+        Book.set('isbd', ISBD);
       }
 
       // One-to-many relations can be set in two ways:
       // add direct object to field (Parse will convert to pointer on save)
-      newObject.set('publisher', bookPublisherObject);
+      Book.set('publisher', bookPublisherObject);
       // or add pointer to field
-      newObject.set('genre', bookGenreObject.toPointer());
+      Book.set('genre', bookGenreObject.toPointer());
 
       // many-to-many relation
       // Create a new relation so data can be added
-      let authorsRelation = newObject.relation('authors');
+      let authorsRelation = Book.relation('authors');
       // bookAuthorsObjects is an array of Parse.Objects,
       // you can add to relation by adding the whole array or object by object
       authorsRelation.add(bookAuthorsObjects);
 
       // After setting the values, save it on the server
-      return await newObject
-        .save()
-        .then(async (_result: Parse.Object) => {
-          // Success
-          Alert.alert('Success!');
-          navigation.goBack();
-          return true;
-        })
-        .catch((error: {message: string}) => {
-          // Error can be caused by lack of Internet connection
-          Alert.alert('Error!', error.message);
-          return false;
-        });
+      try {
+        await Book.save();
+        // Success
+        Alert.alert('Success!');
+        navigation.goBack();
+        return true;
+      } catch (error) {
+        // Error can be caused by lack of Internet connection
+        Alert.alert('Error!', error.message);
+        return false;
+      }
     } catch (error) {
-      // Error can be caused by wrong type of values in fields
-      Alert.alert('Error!', error);
+      // Error can be caused by lack of value selection
+      Alert.alert(
+        'Error!',
+        'Make sure to select valid choices in Publisher, Genre and Author fields!',
+      );
       return false;
     }
   };

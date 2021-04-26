@@ -18,42 +18,28 @@ export const ObjectCreationForm: FC<{}> = ({}): ReactElement => {
   const [objectName, setObjectName] = useState('');
 
   // Functions used by the screen components
-  const createObject = async function (): Promise<[boolean]> {
+  const createObject = async function (): Promise<boolean> {
     // This values come from state variables
     const objectNameValue: string = objectName;
 
-    let dataToSet = {};
+    // Creates a new parse object instance
+    let ParseObject: Parse.Object = new Parse.Object(objectType);
+
+    // Set data to parse object
+    ParseObject.set('name', objectNameValue);
+
+    // After setting the values, save it on the server
     try {
-      dataToSet = {
-        name: objectNameValue,
-      };
+      await ParseObject.save();
+      // Success
+      Alert.alert('Success!');
+      navigation.goBack();
+      return true;
     } catch (error) {
-      // Error can be caused by wrong type of values in fields
+      // Error can be caused by lack of Internet connection
       Alert.alert('Error!', error.message);
       return false;
     }
-
-    // Creates a new parse object instance
-    const objectParseObject: Parse.Object = Parse.Object.extend(objectType);
-    let newObject = new objectParseObject();
-
-    // Set data to parse object
-    newObject.set(dataToSet);
-
-    // After setting the values, save it on the server
-    return await newObject
-      .save()
-      .then(async (_result: Parse.Object) => {
-        // Success
-        Alert.alert('Success!');
-        navigation.goBack();
-        return true;
-      })
-      .catch((error: {message: string}) => {
-        // Error can be caused by lack of Internet connection
-        Alert.alert('Error!', error.message);
-        return false;
-      });
   };
 
   return (
@@ -62,7 +48,7 @@ export const ObjectCreationForm: FC<{}> = ({}): ReactElement => {
         <Title>{`New ${objectType}`}</Title>
         <PaperTextInput
           value={objectName}
-          onChangeText={(text) => setObjectName(text)}
+          onChangeText={text => setObjectName(text)}
           label="Name"
           mode="outlined"
           style={Styles.form_input}

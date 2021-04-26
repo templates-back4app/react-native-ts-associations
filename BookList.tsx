@@ -67,7 +67,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
     }
   }, [publishers, authors, genres, isbds]);
 
-  const queryBooks = async function (): Promise<[Boolean]> {
+  const queryBooks = async function (): Promise<boolean> {
     // This values come from state variables linked to
     // the screen query RadioButton.Group fields, with its options being every
     // parse object instance saved on server from the referred class, which is
@@ -100,25 +100,23 @@ export const BookList: FC<{}> = ({}): ReactElement => {
       parseQuery.equalTo('authors', queryAuthorValue);
     }
 
-    return await parseQuery
-      .find()
-      .then(async (books: [Parse.Object]) => {
-        // Many-to-many objects retrieval
-        // In this example we need to get every related author Parse.Object
-        // and add it to our query result objects
-        for (let book of books) {
-          // This query is done by creating a relation and querying it
-          let bookAuthorsRelation = book.relation('authors');
-          book.authorsObjects = await bookAuthorsRelation.query().find();
-        }
-        setQueriedBooks(books);
-        return true;
-      })
-      .catch((error: {message: string}) => {
-        // Error can be caused by lack of Internet connection
-        Alert.alert('Error!', error.message);
-        return false;
-      });
+    try {
+      let books: [Parse.Object] = await parseQuery.find();
+      // Many-to-many objects retrieval
+      // In this example we need to get every related author Parse.Object
+      // and add it to our query result objects
+      for (let book of books) {
+        // This query is done by creating a relation and querying it
+        let bookAuthorsRelation = book.relation('authors');
+        book.authorsObjects = await bookAuthorsRelation.query().find();
+      }
+      setQueriedBooks(books);
+      return true;
+    } catch (error) {
+      // Error can be caused by lack of Internet connection
+      Alert.alert('Error!', error.message);
+      return false;
+    }
   };
 
   return (
