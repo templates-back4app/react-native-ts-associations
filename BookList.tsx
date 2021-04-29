@@ -73,22 +73,24 @@ export const BookList: FC<{}> = ({}): ReactElement => {
   }, [publishers, authors, genres, isbds]);
 
   const queryBooks = async function (): Promise<boolean> {
-    // These values come from state variables linked to
-    // the screen query RadioButton.Group fields, with its options being every
+    // These values are simple input or radio buttons with query choices
+    // linked to state variables
+    const queryOrderingValue: string = queryOrdering;
+    const queryTitleValue: string = queryTitle;
+    const queryYearFromValue: number = Number(queryYearFrom);
+    const queryYearToValue: number = Number(queryYearTo);
+
+    // These values also come from state variables linked to
+    // the screen query fields, with its options being every
     // parse object instance saved on server from the referred class, which is
-    // queried on screen load via useEffect; this variables retrievie the user choices
+    // queried on screen load via useEffect; this variables retrieve the user choices
     // as a complete Parse.Object;
     const queryPublisherValue: Parse.Object = queryPublisher;
     const queryGenreValue: Parse.Object = queryGenre;
     const queryAuthorValue: Parse.Object = queryAuthor;
     const queryIsbdValue: Parse.Object = queryIsbd;
 
-    // These values are simple input or radio buttons with query choices
-    const queryOrderingValue: string = queryOrdering;
-    const queryTitleValue: string = queryTitle;
-    const queryYearFromValue: number = Number(queryYearFrom);
-    const queryYearToValue: number = Number(queryYearTo);
-
+    // Create our Parse.Query instance so methods can be chained
     // Reading parse objects is done by using Parse.Query
     const parseQuery: Parse.Query = new Parse.Query('Book');
 
@@ -199,6 +201,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
         </View>
         <View>
           <List.Accordion title="Query options">
+            {/* Ascending and descending ordering by title */}
             <RadioButton.Group
               onValueChange={newValue => setQueryOrdering(newValue)}
               value={queryOrdering}>
@@ -215,13 +218,16 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                 />
               </List.Accordion>
             </RadioButton.Group>
+            {/* Title text search */}
             <PaperTextInput
               value={queryTitle}
               onChangeText={text => setQueryTitle(text)}
               label="Book title"
               mode="outlined"
+              autoCapitalize={'none'}
               style={Styles.form_input}
             />
+            {/* Publishing year interval */}
             <List.Accordion title="Publishing Year">
               <PaperTextInput
                 value={queryYearFrom}
@@ -238,6 +244,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                 style={Styles.form_input}
               />
             </List.Accordion>
+            {/* Publisher filter */}
             {publishers !== null && (
               <RadioButton.Group
                 onValueChange={newValue => setQueryPublisher(newValue)}
@@ -253,6 +260,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                 </List.Accordion>
               </RadioButton.Group>
             )}
+            {/* Genre filter */}
             {genres !== null && (
               <RadioButton.Group
                 onValueChange={newValue => setQueryGenre(newValue)}
@@ -268,6 +276,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                 </List.Accordion>
               </RadioButton.Group>
             )}
+            {/* Authors filter */}
             {authors !== null && (
               <RadioButton.Group
                 onValueChange={newValue => setQueryAuthor(newValue)}
@@ -283,6 +292,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                 </List.Accordion>
               </RadioButton.Group>
             )}
+            {/* ISBDs filter */}
             {isbds !== null && (
               <RadioButton.Group
                 onValueChange={newValue => setQueryIsbd(newValue)}
