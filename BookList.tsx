@@ -8,6 +8,7 @@ import {
   Title,
   Button as PaperButton,
   Text as PaperText,
+  TextInput as PaperTextInput,
 } from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 
@@ -24,6 +25,10 @@ export const BookList: FC<{}> = ({}): ReactElement => {
   const [queryGenre, setQueryGenre] = useState('');
   const [queryIsbd, setQueryIsbd] = useState('');
   const [queriedBooks, setQueriedBooks] = useState<[Parse.Object]>();
+  const [queryTitle, setQueryTitle] = useState('');
+  const [queryOrdering, setQueryOrdering] = useState('ascending');
+  const [queryYearFrom, setQueryYearFrom] = useState('');
+  const [queryYearTo, setQueryYearTo] = useState('');
 
   // useEffect is called after the component is initially rendered and
   // after every other render
@@ -68,7 +73,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
   }, [publishers, authors, genres, isbds]);
 
   const queryBooks = async function (): Promise<boolean> {
-    // This values come from state variables linked to
+    // These values come from state variables linked to
     // the screen query RadioButton.Group fields, with its options being every
     // parse object instance saved on server from the referred class, which is
     // queried on screen load via useEffect; this variables retrievie the user choices
@@ -78,9 +83,38 @@ export const BookList: FC<{}> = ({}): ReactElement => {
     const queryAuthorValue: Parse.Object = queryAuthor;
     const queryIsbdValue: Parse.Object = queryIsbd;
 
+    // These values are simple input or radio buttons with query choices
+    const queryOrderingValue: string = queryOrdering;
+    const queryTitleValue: string = queryTitle;
+    const queryYearFromValue: number = Number(queryYearFrom);
+    const queryYearToValue: number = Number(queryYearTo);
+
     // Reading parse objects is done by using Parse.Query
     const parseQuery: Parse.Query = new Parse.Query('Book');
 
+    // Basic queries
+    // Ordering (two options)
+    if (queryOrderingValue === 'ascending') {
+      parseQuery.addAscending('title');
+    } else if (queryOrderingValue === 'descending') {
+      parseQuery.addDescending('title');
+    }
+    // Title query
+    if (queryTitleValue !== '') {
+      // Be aware that contains is case sensitive
+      parseQuery.contains('title', queryTitleValue);
+    }
+    // Year interval query
+    if (queryYearFromValue !== 0 || queryYearToValue !== 0) {
+      if (queryYearFromValue !== 0) {
+        parseQuery.greaterThanOrEqualTo('year', queryYearFromValue);
+      }
+      if (queryYearToValue !== 0) {
+        parseQuery.lessThanOrEqualTo('year', queryYearToValue);
+      }
+    }
+
+    // Association queries
     // One-to-many queries
     if (queryPublisherValue !== '') {
       parseQuery.equalTo('publisher', queryPublisherValue);
@@ -119,6 +153,19 @@ export const BookList: FC<{}> = ({}): ReactElement => {
     }
   };
 
+  const clearQueryChoices = async function (): Promise<boolean> {
+    setQueryPublisher('');
+    setQueryAuthor('');
+    setQueryGenre('');
+    setQueryIsbd('');
+    setQueryTitle('');
+    setQueryOrdering('ascending');
+    setQueryYearFrom('');
+    setQueryYearTo('');
+    await queryBooks();
+    return true;
+  };
+
   return (
     <>
       <ScrollView style={Styles.wrapper}>
@@ -133,7 +180,7 @@ export const BookList: FC<{}> = ({}): ReactElement => {
                 title={book.get('title')}
                 description={`Publisher: ${book
                   .get('publisher')
-                  .get('name')}, ISBD: ${book
+                  .get('name')}, Year: ${book.get('year')}, ISBD: ${book
                   .get('isbd')
                   .get('name')}, Genre: ${book
                   .get('genre')
@@ -152,6 +199,45 @@ export const BookList: FC<{}> = ({}): ReactElement => {
         </View>
         <View>
           <List.Accordion title="Query options">
+            <RadioButton.Group
+              onValueChange={newValue => setQueryOrdering(newValue)}
+              value={queryOrdering}>
+              <List.Accordion title="Ordering">
+                <RadioButton.Item
+                  key={'ascending'}
+                  label={'Title A-Z'}
+                  value={'ascending'}
+                />
+                <RadioButton.Item
+                  key={'descending'}
+                  label={'Title Z-A'}
+                  value={'descending'}
+                />
+              </List.Accordion>
+            </RadioButton.Group>
+            <PaperTextInput
+              value={queryTitle}
+              onChangeText={text => setQueryTitle(text)}
+              label="Book title"
+              mode="outlined"
+              style={Styles.form_input}
+            />
+            <List.Accordion title="Publishing Year">
+              <PaperTextInput
+                value={queryYearFrom}
+                onChangeText={text => setQueryYearFrom(text)}
+                label="Year from"
+                mode="outlined"
+                style={Styles.form_input}
+              />
+              <PaperTextInput
+                value={queryYearTo}
+                onChangeText={text => setQueryYearTo(text)}
+                label="Year to"
+                mode="outlined"
+                style={Styles.form_input}
+              />
+            </List.Accordion>
             {publishers !== null && (
               <RadioButton.Group
                 onValueChange={newValue => setQueryPublisher(newValue)}
@@ -220,6 +306,14 @@ export const BookList: FC<{}> = ({}): ReactElement => {
             color={'#208AEC'}
             style={Styles.create_button}>
             {'Query'}
+          </PaperButton>
+          <PaperButton
+            onPress={() => clearQueryChoices()}
+            mode="contained"
+            icon="delete"
+            color={'#208AEC'}
+            style={Styles.create_button}>
+            {'Clear Query'}
           </PaperButton>
         </View>
         <Divider />
@@ -295,5 +389,11 @@ const Styles = StyleSheet.create({
   },
   book_text: {
     fontSize: 15,
+  },
+  form_input: {
+    height: 44,
+    marginBottom: 16,
+    backgroundColor: '#FFF',
+    fontSize: 14,
   },
 });
